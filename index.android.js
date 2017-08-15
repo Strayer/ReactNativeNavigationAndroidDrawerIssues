@@ -1,53 +1,96 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- * @flow
- */
-
 import React, { Component } from 'react';
-import {
-  AppRegistry,
-  StyleSheet,
-  Text,
-  View
-} from 'react-native';
+import { Text, View } from 'react-native';
+import { Navigation } from 'react-native-navigation';
 
-export default class ReactNativeNavigationAndroidDrawerIssues extends Component {
-  render() {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.welcome}>
-          Welcome to React Native!
-        </Text>
-        <Text style={styles.instructions}>
-          To get started, edit index.android.js
-        </Text>
-        <Text style={styles.instructions}>
-          Double tap R on your keyboard to reload,{'\n'}
-          Shake or press menu button for dev menu
-        </Text>
-      </View>
-    );
-  }
+const First = () => <Text>First</Text>;
+const Second = () => <Text>Second</Text>;
+
+class Drawer extends Component {
+    navigate = (screenID) => {
+        this.props.navigator.handleDeepLink({
+            link: screenID,
+        });
+    };
+    
+    render() {
+        return (
+            <View style={{ flex: 1, backgroundColor: "white" }}>
+                <Text onPress={() => this.navigate("first")}>First</Text>
+                <Text onPress={() => this.navigate("second")}>Second</Text>
+            </View>
+        );
+    }
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5FCFF',
-  },
-  welcome: {
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 10,
-  },
-  instructions: {
-    textAlign: 'center',
-    color: '#333333',
-    marginBottom: 5,
-  },
-});
+const wrapWithNavigation = (WrappedComponent) => {
+    return class WrappedNavigation extends Component {
+        static navigatorStyle = {
+            statusBarColor: "pink",
+        };
+        static navigatorButtons = {
+            leftButtons: [
+                { id: "sideMenu" }
+            ],
+        };
 
-AppRegistry.registerComponent('ReactNativeNavigationAndroidDrawerIssues', () => ReactNativeNavigationAndroidDrawerIssues);
+        constructor(props: any) {
+            super(props);
+
+            this.props.navigator.setOnNavigatorEvent(this.onNavigatorEvent);
+        }
+
+        onNavigatorEvent = (event) => {
+            if (event.type === "NavBarButtonPress") {
+                if (event.id === "sideMenu") {
+                    this.props.navigator.toggleDrawer({
+                        side: "left",
+                        animated: "true",
+                    });
+                }
+            }
+
+            // handle a deep link
+            if (event.type === "DeepLink") {
+                const parts = event.link.split("/");
+
+                this.props.navigator.toggleDrawer({
+                    side: "left",
+                    animated: "true",
+                    to: "closed",
+                });
+                
+                if (parts[0] === "first") {
+                    this.props.navigator.resetTo({
+                        screen: "first",
+                        title: "First",
+                    });
+                } else if (parts[0] === "second") {
+                    this.props.navigator.resetTo({
+                        screen: "second",
+                        title: "Second",
+                    });
+                }
+            }
+        };
+
+        render() {
+            return <WrappedComponent {...this.props} />;
+        }
+    };
+};
+
+Navigation.registerComponent('first', () => wrapWithNavigation(First));
+Navigation.registerComponent('second', () => wrapWithNavigation(Second));
+Navigation.registerComponent('drawer', () => wrapWithNavigation(Drawer));
+
+Navigation.startSingleScreenApp({
+    screen: {
+        screen: "first",
+        title: "First",
+    },
+    drawer: {
+        left: {
+            screen: "drawer",
+        }
+    },
+});
