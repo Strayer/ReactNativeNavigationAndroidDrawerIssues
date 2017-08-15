@@ -14,7 +14,7 @@ class Drawer extends Component {
     
     render() {
         return (
-            <View style={{ flex: 1, backgroundColor: "white" }}>
+            <View style={{ flex: 1, backgroundColor: "white", width: 280 }}>
                 <Text onPress={() => this.navigate("first")}>First</Text>
                 <Text onPress={() => this.navigate("second")}>Second</Text>
             </View>
